@@ -17,6 +17,7 @@ import { join } from "node:path";
 import { attest } from "./attest.js";
 import { loadRegistry } from "./config.js";
 import { paywall, railSummary, type RoutePrices } from "./payments.js";
+import { ROUTE_SCHEMAS } from "./schemas.js";
 import { CapExceeded, UpstreamError, callTool } from "./pay.js";
 import { getTool } from "./config.js";
 import { verify } from "./sign.js";
@@ -26,6 +27,7 @@ const PRICES: RoutePrices = {
   "GET /attest": {
     price: "$0.001",
     description: "Signed attestation of this agent's tool registry, payment rails, caps, and remaining budget",
+    ...ROUTE_SCHEMAS["GET /attest"],
   },
 };
 
