@@ -1,0 +1,46 @@
+{
+  "$comment": "Drop this into Claude Desktop's claude_desktop_config.json (macOS: ~/Library/Application Support/Claude/, Windows: %APPDATA%/Claude/). Merge the mcpServers block if you already have one. Restart Claude Desktop afterwards.",
+  "mcpServers": {
+    "x402-commerce": {
+      "command": "npx",
+      "args": ["tsx", "/absolute/path/to/x402-mcp-commerce/src/mcp.ts"],
+      "env": {
+        "PRIVATE_KEY": "0x…a throwaway wallet funded with Base Sepolia USDC…",
+        "X402_RAIL": "auto",
+        "MAX_PER_CALL_USD": "0.05",
+        "MAX_SESSION_USD": "1",
+        "MAX_CALLS": "200",
+        "X402_UPSTREAM_X402_TABLEBOOK": "http://localhost:4039",
+        "X402_UPSTREAM_X402_STOREFRONT": "http://localhost:4022",
+        "X402_UPSTREAM_X402_FLIGHT_SEARCH": "http://localhost:4031"
+      }
+    },
+
+    "$comment_solana": "Same server, Solana rail. Give it a Solana key and set X402_RAIL=solana; per-tool overrides still win, so book_table below stays on Base.",
+    "x402-commerce-solana": {
+      "command": "npx",
+      "args": ["tsx", "/absolute/path/to/x402-mcp-commerce/src/mcp.ts"],
+      "env": {
+        "SOLANA_PRIVATE_KEY": "…base58 secret key…",
+        "SOLANA_RPC_URL": "https://your-dedicated-rpc.example.com",
+        "X402_RAIL": "solana",
+        "X402_RAIL_BOOK_TABLE": "evm",
+        "PRIVATE_KEY": "0x…still needed for the tools pinned to evm…",
+        "MAX_PER_CALL_USD": "0.05",
+        "MAX_SESSION_USD": "1"
+      }
+    },
+
+    "$comment_sandbox": "Rehearsal mode: every tool points at x402-agent-sandbox, so the whole toolbox costs fractions of a cent and books nothing real.",
+    "x402-commerce-sandbox": {
+      "command": "npx",
+      "args": ["tsx", "/absolute/path/to/x402-mcp-commerce/src/mcp.ts"],
+      "env": {
+        "PRIVATE_KEY": "0x…throwaway testnet wallet…",
+        "X402_TOOLS_CONFIG": "/absolute/path/to/x402-mcp-commerce/config/tools.sandbox.json",
+        "MAX_PER_CALL_USD": "0.01",
+        "MAX_SESSION_USD": "0.10"
+      }
+    }
+  }
+}

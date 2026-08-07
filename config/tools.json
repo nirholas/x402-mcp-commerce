@@ -1,0 +1,349 @@
+{
+  "$comment": "Tool registry. Each entry maps one MCP tool to one upstream x402 route. The baseUrls below follow the suite's local-port convention (4000 + the service's suite id) — point them at your own deployments with X402_UPSTREAM_<UPSTREAM>, or at x402-agent-sandbox (config/tools.sandbox.json) to rehearse the whole toolbox for fractions of a cent. `rail` is optional and overrides the server-wide default (auto | evm | solana).",
+  "defaults": {
+    "rail": "auto",
+    "timeoutMs": 20000
+  },
+  "tools": [
+    {
+      "name": "search_flights",
+      "description": "Search flights between two airports on a date. Returns priced offers with airline, times, stops and fare basis.",
+      "upstream": "x402-flight-search",
+      "baseUrl": "http://localhost:4007",
+      "method": "GET",
+      "path": "/search",
+      "price": "$0.005",
+      "query": [
+        "origin",
+        "destination",
+        "departureDate",
+        "returnDate",
+        "adults",
+        "maxPrice"
+      ],
+      "input": {
+        "origin": {
+          "type": "string",
+          "required": true,
+          "description": "IATA origin airport code, e.g. SFO"
+        },
+        "destination": {
+          "type": "string",
+          "required": true,
+          "description": "IATA destination airport code, e.g. JFK"
+        },
+        "departureDate": {
+          "type": "string",
+          "required": true,
+          "description": "YYYY-MM-DD"
+        },
+        "returnDate": {
+          "type": "string",
+          "description": "YYYY-MM-DD for a round trip"
+        },
+        "adults": {
+          "type": "number",
+          "description": "Passenger count, default 1"
+        },
+        "maxPrice": {
+          "type": "number",
+          "description": "Cap on total fare"
+        }
+      }
+    },
+    {
+      "name": "price_flight",
+      "description": "Confirm the live price and availability of a specific flight offer before booking.",
+      "upstream": "x402-flight-search",
+      "baseUrl": "http://localhost:4007",
+      "method": "GET",
+      "path": "/price/{offerId}",
+      "price": "$0.003",
+      "input": {
+        "offerId": {
+          "type": "string",
+          "required": true,
+          "description": "offerId from search_flights"
+        }
+      }
+    },
+    {
+      "name": "find_tables",
+      "description": "List open restaurant reservation slots for a date and party size.",
+      "upstream": "x402-tablebook",
+      "baseUrl": "http://localhost:4001",
+      "method": "GET",
+      "path": "/availability",
+      "price": "$0.001",
+      "query": [
+        "date",
+        "party",
+        "days"
+      ],
+      "input": {
+        "date": {
+          "type": "string",
+          "description": "YYYY-MM-DD"
+        },
+        "party": {
+          "type": "number",
+          "description": "Party size, 1-8"
+        },
+        "days": {
+          "type": "number",
+          "description": "Days to scan when no date is given"
+        }
+      }
+    },
+    {
+      "name": "book_table",
+      "description": "Book a restaurant table. Returns the confirmed reservation with a cancel token, refund terms and a calendar invite. The hold is refundable.",
+      "upstream": "x402-tablebook",
+      "baseUrl": "http://localhost:4001",
+      "method": "POST",
+      "path": "/book",
+      "price": "$0.01",
+      "input": {
+        "date": {
+          "type": "string",
+          "required": true,
+          "description": "YYYY-MM-DD"
+        },
+        "time": {
+          "type": "string",
+          "required": true,
+          "description": "HH:MM, 24-hour"
+        },
+        "party": {
+          "type": "number",
+          "required": true,
+          "description": "Party size, 1-8"
+        },
+        "name": {
+          "type": "string",
+          "required": true,
+          "description": "Name on the reservation"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Requests for the restaurant"
+        }
+      }
+    },
+    {
+      "name": "search_hotels",
+      "description": "Search hotel rooms and offers for a city and date range.",
+      "upstream": "x402-hotel-search",
+      "baseUrl": "http://localhost:4008",
+      "method": "GET",
+      "path": "/search",
+      "price": "$0.005",
+      "query": [
+        "cityCode",
+        "checkIn",
+        "checkOut",
+        "adults"
+      ],
+      "input": {
+        "cityCode": {
+          "type": "string",
+          "required": true,
+          "description": "IATA city code, e.g. NYC"
+        },
+        "checkIn": {
+          "type": "string",
+          "required": true,
+          "description": "YYYY-MM-DD"
+        },
+        "checkOut": {
+          "type": "string",
+          "required": true,
+          "description": "YYYY-MM-DD"
+        },
+        "adults": {
+          "type": "number",
+          "description": "Guest count, default 2"
+        }
+      }
+    },
+    {
+      "name": "check_weather",
+      "description": "Forecast for a location, with the plan-relevant summary an agent needs to decide whether an outdoor booking is a good idea.",
+      "upstream": "x402-weather-guard",
+      "baseUrl": "http://localhost:4019",
+      "method": "GET",
+      "path": "/forecast",
+      "price": "$0.001",
+      "query": [
+        "lat",
+        "lon",
+        "date"
+      ],
+      "input": {
+        "lat": {
+          "type": "number",
+          "required": true,
+          "description": "Latitude"
+        },
+        "lon": {
+          "type": "number",
+          "required": true,
+          "description": "Longitude"
+        },
+        "date": {
+          "type": "string",
+          "description": "YYYY-MM-DD, defaults to today"
+        }
+      }
+    },
+    {
+      "name": "browse_catalog",
+      "description": "List a storefront's items with prices and buy routes. Free at the merchant.",
+      "upstream": "x402-storefront",
+      "baseUrl": "http://localhost:4006",
+      "method": "GET",
+      "path": "/catalog",
+      "price": "free",
+      "input": {}
+    },
+    {
+      "name": "buy_item",
+      "description": "Buy an item from a storefront. Digital goods return a signed download URL and license; physical goods return a signed order confirmation and fulfillment record.",
+      "upstream": "x402-storefront",
+      "baseUrl": "http://localhost:4006",
+      "method": "GET",
+      "path": "/buy/{sku}",
+      "price": "per item",
+      "query": [
+        "name",
+        "address",
+        "country"
+      ],
+      "input": {
+        "sku": {
+          "type": "string",
+          "required": true,
+          "description": "Item sku from browse_catalog"
+        },
+        "name": {
+          "type": "string",
+          "description": "Shipping name (physical items)"
+        },
+        "address": {
+          "type": "string",
+          "description": "Shipping address (physical items)"
+        },
+        "country": {
+          "type": "string",
+          "description": "ISO country code (physical items)"
+        }
+      }
+    },
+    {
+      "name": "search_places",
+      "description": "Find places — restaurants, shops, landmarks — near a point or in a named area.",
+      "upstream": "x402-places",
+      "baseUrl": "http://localhost:4012",
+      "method": "GET",
+      "path": "/search",
+      "price": "$0.002",
+      "query": [
+        "q",
+        "lat",
+        "lon",
+        "radius",
+        "kind"
+      ],
+      "input": {
+        "q": {
+          "type": "string",
+          "description": "Free-text query"
+        },
+        "lat": {
+          "type": "number",
+          "description": "Latitude"
+        },
+        "lon": {
+          "type": "number",
+          "description": "Longitude"
+        },
+        "radius": {
+          "type": "number",
+          "description": "Metres"
+        },
+        "kind": {
+          "type": "string",
+          "description": "Place category filter"
+        }
+      }
+    },
+    {
+      "name": "search_news",
+      "description": "Query the global news wire for coverage of a topic in a time window.",
+      "upstream": "x402-news-wire",
+      "baseUrl": "http://localhost:4017",
+      "method": "GET",
+      "path": "/query",
+      "price": "$0.003",
+      "query": [
+        "q",
+        "since",
+        "limit"
+      ],
+      "input": {
+        "q": {
+          "type": "string",
+          "required": true,
+          "description": "Search query"
+        },
+        "since": {
+          "type": "string",
+          "description": "ISO timestamp or relative window, e.g. 24h"
+        },
+        "limit": {
+          "type": "number",
+          "description": "Max articles"
+        }
+      }
+    },
+    {
+      "name": "check_domain",
+      "description": "Check whether a domain is registered, and if so who holds it and when it expires.",
+      "upstream": "x402-domains",
+      "baseUrl": "http://localhost:4026",
+      "method": "GET",
+      "path": "/check/{domain}",
+      "price": "$0.001",
+      "input": {
+        "domain": {
+          "type": "string",
+          "required": true,
+          "description": "Domain name, e.g. example.com"
+        }
+      }
+    },
+    {
+      "name": "track_confirmation",
+      "description": "Normalize any merchant confirmation into a portable record plus an ICS calendar invite. Feed it the artifact any booking tool returned.",
+      "upstream": "x402-confirmations",
+      "baseUrl": "http://localhost:4037",
+      "method": "POST",
+      "path": "/track",
+      "price": "$0.005",
+      "input": {
+        "confirmation": {
+          "type": "object",
+          "description": "Structured confirmation JSON from a merchant"
+        },
+        "rawText": {
+          "type": "string",
+          "description": "Freeform confirmation text, e.g. a pasted email"
+        },
+        "type": {
+          "type": "string",
+          "description": "restaurant | hotel | order | flight | appointment | generic"
+        }
+      }
+    }
+  ]
+}

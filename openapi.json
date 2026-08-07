@@ -1,0 +1,761 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "x402-mcp-commerce",
+    "version": "0.1.0",
+    "description": "MCP server that gives Claude/GPT agents commerce tools — each tool call pays an upstream x402 endpoint and returns its artifact. This OpenAPI document covers the HTTP inspector that runs beside the stdio MCP server; the tools themselves are consumed over MCP.  Dual-rail: pay in USDC on Base (EVM) or USDC on Solana — your client picks the rail from the `accepts` array.",
+    "contact": {
+      "name": "nirholas",
+      "email": "nichxbt@gmail.com"
+    },
+    "license": {
+      "name": "Apache-2.0",
+      "identifier": "Apache-2.0"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:4039",
+      "description": "local inspector"
+    }
+  ],
+  "paths": {
+    "/attest": {
+      "get": {
+        "summary": "Signed capability + budget attestation — $0.001",
+        "operationId": "attest",
+        "description": "A signed, timestamped snapshot of this agent's tool registry, per-tool prices and payment rails, spending caps, and remaining budget. Returned in the response body — nothing is delivered later.",
+        "responses": {
+          "200": {
+            "description": "Signed attestation",
+            "headers": {
+              "X-PAYMENT-RESPONSE": {
+                "description": "base64 JSON settlement receipt: {success, rail, network, transaction, payer}",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "payload": {
+                      "type": "object",
+                      "properties": {
+                        "attestationId": {
+                          "type": "string"
+                        },
+                        "issuedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "expiresAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "server": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "version": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "rails": {
+                          "type": "object",
+                          "properties": {
+                            "default": {
+                              "type": "string",
+                              "enum": [
+                                "auto",
+                                "evm",
+                                "solana"
+                              ]
+                            },
+                            "available": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "evm",
+                                  "solana"
+                                ]
+                              }
+                            },
+                            "note": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "caps": {
+                          "type": "object",
+                          "properties": {
+                            "maxPerCallUsd": {
+                              "type": "number"
+                            },
+                            "maxSessionUsd": {
+                              "type": "number"
+                            },
+                            "maxCalls": {
+                              "type": "integer"
+                            },
+                            "allowedTools": {
+                              "description": "array of tool names, or the string 'all registered tools'"
+                            }
+                          }
+                        },
+                        "budget": {
+                          "type": "object",
+                          "properties": {
+                            "usd": {
+                              "type": "number"
+                            },
+                            "calls": {
+                              "type": "integer"
+                            },
+                            "remainingUsd": {
+                              "type": "number"
+                            },
+                            "remainingCalls": {
+                              "type": "integer"
+                            }
+                          }
+                        },
+                        "tools": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "description": {
+                                "type": "string"
+                              },
+                              "upstream": {
+                                "type": "string"
+                              },
+                              "baseUrl": {
+                                "type": "string"
+                              },
+                              "route": {
+                                "type": "string"
+                              },
+                              "price": {
+                                "type": "string"
+                              },
+                              "rail": {
+                                "type": "string",
+                                "enum": [
+                                  "auto",
+                                  "evm",
+                                  "solana"
+                                ]
+                              },
+                              "affordable": {
+                                "type": "boolean",
+                                "description": "whether this agent could pay for the tool right now under its own caps"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "required": [
+                        "attestationId",
+                        "issuedAt",
+                        "expiresAt",
+                        "rails",
+                        "caps",
+                        "budget",
+                        "tools"
+                      ]
+                    },
+                    "signature": {
+                      "type": "string"
+                    },
+                    "algorithm": {
+                      "type": "string",
+                      "const": "HMAC-SHA256"
+                    },
+                    "canonicalization": {
+                      "type": "string",
+                      "const": "sorted-keys-json"
+                    }
+                  },
+                  "required": [
+                    "payload",
+                    "signature",
+                    "algorithm",
+                    "canonicalization"
+                  ]
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment required — pay in USDC on Base or Solana",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentRequirements"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tools": {
+      "get": {
+        "summary": "Tool registry (free)",
+        "operationId": "listTools",
+        "description": "The registry as the MCP server sees it, after env overrides.",
+        "responses": {
+          "200": {
+            "description": "Rails and tools",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "rails": {
+                      "type": "object",
+                      "properties": {
+                        "default": {
+                          "type": "string",
+                          "enum": [
+                            "auto",
+                            "evm",
+                            "solana"
+                          ]
+                        },
+                        "available": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "evm",
+                              "solana"
+                            ]
+                          }
+                        },
+                        "note": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "tools": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "upstream": {
+                            "type": "string"
+                          },
+                          "baseUrl": {
+                            "type": "string"
+                          },
+                          "route": {
+                            "type": "string"
+                          },
+                          "price": {
+                            "type": "string"
+                          },
+                          "rail": {
+                            "type": "string",
+                            "enum": [
+                              "auto",
+                              "evm",
+                              "solana"
+                            ]
+                          },
+                          "input": {
+                            "type": "object",
+                            "additionalProperties": true
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tools/{name}": {
+      "post": {
+        "summary": "Run one registered tool over HTTP (free to call)",
+        "operationId": "callTool",
+        "description": "For agents that don't speak MCP. Free because the caller is not paying this server — they are triggering a payment from this agent's own wallet, bounded by its own caps. Expose only to trusted callers.",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "The tool's arguments, plus an optional per-call rail override.",
+                "properties": {
+                  "rail": {
+                    "type": "string",
+                    "enum": [
+                      "auto",
+                      "evm",
+                      "solana"
+                    ]
+                  }
+                },
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Upstream artifact plus the payment receipt",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CallResult"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "A spending cap blocked the call before any payment was signed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "UNKNOWN_TOOL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "TOOL_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "SOLANA_PAYMENT_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "UPSTREAM_UNREACHABLE, MALFORMED_CHALLENGE, PAYMENT_FAILED or RAIL_UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ledger": {
+      "get": {
+        "summary": "Spending caps, spend so far, and the payment ledger (free)",
+        "operationId": "ledger",
+        "responses": {
+          "200": {
+            "description": "Spending state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/verify": {
+      "post": {
+        "summary": "Verify an attestation signature (free)",
+        "operationId": "verifyAttestation",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "payload": {
+                    "type": "object"
+                  },
+                  "signature": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "payload",
+                  "signature"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "valid": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Liveness (free)",
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "service": {
+                      "type": "string"
+                    },
+                    "rails": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/.well-known/x402": {
+      "get": {
+        "summary": "Discovery manifest (free)",
+        "operationId": "manifest",
+        "responses": {
+          "200": {
+            "description": "x402 discovery manifest",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "CallResult": {
+        "type": "object",
+        "description": "What every commerce tool returns: the merchant's artifact plus the payment receipt.",
+        "properties": {
+          "tool": {
+            "type": "string"
+          },
+          "upstream": {
+            "type": "string"
+          },
+          "resource": {
+            "type": "string",
+            "description": "The upstream URL that was called."
+          },
+          "paid": {
+            "type": "boolean",
+            "description": "false for upstream routes that are free."
+          },
+          "rail": {
+            "type": "object",
+            "properties": {
+              "requested": {
+                "type": "string",
+                "enum": [
+                  "auto",
+                  "evm",
+                  "solana"
+                ]
+              },
+              "used": {
+                "type": "string",
+                "enum": [
+                  "evm",
+                  "solana"
+                ],
+                "nullable": true
+              }
+            }
+          },
+          "artifact": {
+            "description": "The merchant's response body, verbatim."
+          },
+          "receipt": {
+            "type": "object",
+            "nullable": true,
+            "description": "Decoded X-PAYMENT-RESPONSE.",
+            "properties": {
+              "success": {
+                "type": "boolean"
+              },
+              "rail": {
+                "type": "string"
+              },
+              "network": {
+                "type": "string"
+              },
+              "transaction": {
+                "type": "string"
+              },
+              "payer": {
+                "type": "string"
+              }
+            }
+          },
+          "price": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "usd": {
+                "type": "number"
+              },
+              "atomic": {
+                "type": "string"
+              },
+              "asset": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "required": [
+          "tool",
+          "upstream",
+          "resource",
+          "paid",
+          "rail",
+          "artifact"
+        ]
+      },
+      "PaymentRequirements": {
+        "type": "object",
+        "description": "x402 payment requirements returned with HTTP 402. `accepts` always lists both rails (USDC on Base and USDC on Solana); the client settles whichever one it can and retries with an X-PAYMENT header.",
+        "properties": {
+          "x402Version": {
+            "type": "integer",
+            "example": 1
+          },
+          "error": {
+            "type": "string"
+          },
+          "resource": {
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "mimeType": {
+                "type": "string"
+              }
+            }
+          },
+          "accepts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentRequirement"
+            }
+          }
+        },
+        "required": [
+          "x402Version",
+          "accepts"
+        ],
+        "example": {
+          "x402Version": 1,
+          "error": "Payment required — pay in USDC on Base or Solana; your client picks the rail.",
+          "accepts": [
+            {
+              "scheme": "exact",
+              "network": "base-sepolia",
+              "maxAmountRequired": "1000",
+              "resource": "http://localhost:4021/example",
+              "description": "Example paid resource",
+              "mimeType": "application/json",
+              "payTo": "0x40252CFDF8B20Ed757D61ff157719F33Ec332402",
+              "maxTimeoutSeconds": 60,
+              "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+              "extra": {
+                "name": "USDC",
+                "version": "2"
+              }
+            },
+            {
+              "scheme": "exact",
+              "network": "solana",
+              "maxAmountRequired": "1000",
+              "amount": "1000",
+              "resource": "http://localhost:4021/example",
+              "description": "Example paid resource",
+              "mimeType": "application/json",
+              "payTo": "WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW",
+              "maxTimeoutSeconds": 60,
+              "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+              "extra": {
+                "feePayer": "2wKupLR9q6wXYppw8Gr2NvWxKBUqm4PPJKkQfoxHDBg4",
+                "name": "USDC",
+                "decimals": 6
+              }
+            }
+          ]
+        }
+      },
+      "PaymentRequirement": {
+        "type": "object",
+        "description": "One accepted payment rail.",
+        "properties": {
+          "scheme": {
+            "type": "string",
+            "example": "exact"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "base-sepolia",
+              "base",
+              "solana",
+              "solana-devnet"
+            ]
+          },
+          "maxAmountRequired": {
+            "type": "string",
+            "description": "Atomic units (USDC has 6 decimals)."
+          },
+          "amount": {
+            "type": "string",
+            "description": "Alias of maxAmountRequired, read by browser checkout clients."
+          },
+          "resource": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "payTo": {
+            "type": "string",
+            "description": "0x address on EVM rails, base58 address on Solana."
+          },
+          "maxTimeoutSeconds": {
+            "type": "integer"
+          },
+          "asset": {
+            "type": "string",
+            "description": "USDC contract address (EVM) or mint (Solana)."
+          },
+          "extra": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "scheme",
+          "network",
+          "maxAmountRequired",
+          "resource",
+          "payTo",
+          "asset"
+        ]
+      }
+    }
+  }
+}

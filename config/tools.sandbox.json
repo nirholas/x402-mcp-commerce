@@ -1,0 +1,190 @@
+{
+  "$comment": "Rehearsal registry: every tool points at x402-agent-sandbox (default port 4038), whose responses mirror the real merchants field for field. Run the sandbox, then start the MCP server with X402_TOOLS_CONFIG pointing here. A full session costs a fraction of a cent and books nothing real.",
+  "defaults": {
+    "rail": "auto",
+    "timeoutMs": 20000
+  },
+  "tools": [
+    {
+      "name": "find_tables",
+      "description": "List open restaurant reservation slots for a date and party size.",
+      "upstream": "x402-agent-sandbox",
+      "baseUrl": "http://localhost:4038",
+      "method": "GET",
+      "path": "/restaurant/availability",
+      "price": "free",
+      "query": [
+        "date",
+        "party",
+        "days"
+      ],
+      "input": {
+        "date": {
+          "type": "string",
+          "description": "YYYY-MM-DD"
+        },
+        "party": {
+          "type": "number",
+          "description": "Party size, 1-8"
+        },
+        "days": {
+          "type": "number",
+          "description": "Days to scan when no date is given"
+        }
+      }
+    },
+    {
+      "name": "book_table",
+      "description": "Book a restaurant table. Returns the confirmed reservation with a cancel token, refund terms and a calendar invite. The hold is refundable.",
+      "upstream": "x402-agent-sandbox",
+      "baseUrl": "http://localhost:4038",
+      "method": "POST",
+      "path": "/restaurant/book",
+      "price": "$0.001",
+      "input": {
+        "date": {
+          "type": "string",
+          "required": true,
+          "description": "YYYY-MM-DD"
+        },
+        "time": {
+          "type": "string",
+          "required": true,
+          "description": "HH:MM, 24-hour"
+        },
+        "party": {
+          "type": "number",
+          "required": true,
+          "description": "Party size, 1-8"
+        },
+        "name": {
+          "type": "string",
+          "required": true,
+          "description": "Name on the reservation"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Requests for the restaurant"
+        }
+      }
+    },
+    {
+      "name": "search_hotels",
+      "description": "Search hotel rooms and offers for a city and date range.",
+      "upstream": "x402-agent-sandbox",
+      "baseUrl": "http://localhost:4038",
+      "method": "GET",
+      "path": "/hotel/search",
+      "price": "free",
+      "query": [
+        "checkIn",
+        "checkOut",
+        "guests"
+      ],
+      "input": {
+        "cityCode": {
+          "type": "string",
+          "required": true,
+          "description": "IATA city code, e.g. NYC"
+        },
+        "checkIn": {
+          "type": "string",
+          "required": true,
+          "description": "YYYY-MM-DD"
+        },
+        "checkOut": {
+          "type": "string",
+          "required": true,
+          "description": "YYYY-MM-DD"
+        },
+        "adults": {
+          "type": "number",
+          "description": "Guest count, default 2"
+        }
+      }
+    },
+    {
+      "name": "browse_catalog",
+      "description": "List a storefront's items with prices and buy routes. Free at the merchant.",
+      "upstream": "x402-agent-sandbox",
+      "baseUrl": "http://localhost:4038",
+      "method": "GET",
+      "path": "/store/catalog",
+      "price": "free",
+      "input": {}
+    },
+    {
+      "name": "buy_item",
+      "description": "Buy an item from a storefront. Digital goods return a signed download URL and license; physical goods return a signed order confirmation and fulfillment record.",
+      "upstream": "x402-agent-sandbox",
+      "baseUrl": "http://localhost:4038",
+      "method": "POST",
+      "path": "/store/buy",
+      "price": "$0.001",
+      "query": [],
+      "input": {
+        "sku": {
+          "type": "string",
+          "required": true,
+          "description": "sandbox-guide | sandbox-dataset | sandbox-stickers | sandbox-mug"
+        },
+        "name": {
+          "type": "string",
+          "description": "Shipping name (physical items)"
+        },
+        "address": {
+          "type": "string",
+          "description": "Shipping address (physical items)"
+        },
+        "country": {
+          "type": "string",
+          "description": "ISO country code (physical items)"
+        }
+      }
+    },
+    {
+      "name": "book_room",
+      "description": "Book a room at the sandbox hotel. Returns the suite lodging confirmation schema.",
+      "upstream": "x402-agent-sandbox",
+      "baseUrl": "http://localhost:4038",
+      "method": "POST",
+      "path": "/hotel/book",
+      "price": "$0.001",
+      "input": {
+        "checkIn": {
+          "type": "string",
+          "required": true,
+          "description": "YYYY-MM-DD"
+        },
+        "checkOut": {
+          "type": "string",
+          "required": true,
+          "description": "YYYY-MM-DD"
+        },
+        "guests": {
+          "type": "number",
+          "description": "Guest count, 1-4"
+        },
+        "name": {
+          "type": "string",
+          "required": true,
+          "description": "Name on the booking"
+        },
+        "roomType": {
+          "type": "string",
+          "description": "STANDARD_KING | STANDARD_TWIN | DELUXE_KING | SUITE"
+        }
+      }
+    },
+    {
+      "name": "town_directory",
+      "description": "List the sandbox merchants, their routes, and which real service each mirrors.",
+      "upstream": "x402-agent-sandbox",
+      "baseUrl": "http://localhost:4038",
+      "method": "GET",
+      "path": "/town",
+      "price": "free",
+      "input": {}
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "x402Version": 1,
+  "name": "x402-mcp-commerce",
+  "description": "MCP server that gives Claude/GPT agents commerce tools — each tool call pays an upstream x402 endpoint and returns its artifact",
+  "paymentRails": "Pay in USDC on Base or Solana — your client picks the rail.",
+  "contact": "nichxbt@gmail.com",
+  "role": "This service is primarily a BUYER: its MCP tools pay upstream x402 merchants on the agent's behalf. The one resource it sells is a signed attestation of its own capabilities and remaining budget.",
+  "accepts": [
+    { "network": "base-sepolia", "asset": "USDC", "assetAddress": "0x036CbD53842c5426634e7929541eC2318f3dCF7e", "payTo": "0x40252CFDF8B20Ed757D61ff157719F33Ec332402" },
+    { "network": "base", "asset": "USDC", "assetAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", "payTo": "0x40252CFDF8B20Ed757D61ff157719F33Ec332402" },
+    { "network": "solana", "asset": "USDC", "assetAddress": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", "payTo": "WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW" }
+  ],
+  "resources": [
+    {
+      "resource": "GET /attest",
+      "description": "A signed, timestamped attestation of this agent's tool registry, per-tool prices and payment rails, spending caps, and remaining budget. Returned in the response body; verifiable offline with the server's SIGNING_SECRET or through the free POST /verify.",
+      "price": "$0.001",
+      "networks": ["base-sepolia", "base", "solana"],
+      "asset": "USDC",
+      "accepts": [
+        { "network": "base-sepolia", "asset": "USDC", "assetAddress": "0x036CbD53842c5426634e7929541eC2318f3dCF7e", "payTo": "0x40252CFDF8B20Ed757D61ff157719F33Ec332402" },
+        { "network": "base", "asset": "USDC", "assetAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", "payTo": "0x40252CFDF8B20Ed757D61ff157719F33Ec332402" },
+        { "network": "solana", "asset": "USDC", "assetAddress": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", "payTo": "WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW" }
+      ],
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "payload": {
+            "type": "object",
+            "properties": {
+              "attestationId": { "type": "string" },
+              "issuedAt": { "type": "string", "format": "date-time" },
+              "expiresAt": { "type": "string", "format": "date-time" },
+              "server": { "type": "object", "properties": { "name": { "type": "string" }, "version": { "type": "string" } } },
+              "rails": {
+                "type": "object",
+                "properties": {
+                  "default": { "type": "string", "enum": ["auto", "evm", "solana"] },
+                  "available": { "type": "array", "items": { "type": "string", "enum": ["evm", "solana"] } },
+                  "note": { "type": "string" }
+                }
+              },
+              "caps": {
+                "type": "object",
+                "properties": {
+                  "maxPerCallUsd": { "type": "number" },
+                  "maxSessionUsd": { "type": "number" },
+                  "maxCalls": { "type": "integer" },
+                  "allowedTools": { "description": "array of tool names, or the string 'all registered tools'" }
+                }
+              },
+              "budget": {
+                "type": "object",
+                "properties": {
+                  "usd": { "type": "number" },
+                  "calls": { "type": "integer" },
+                  "remainingUsd": { "type": "number" },
+                  "remainingCalls": { "type": "integer" }
+                }
+              },
+              "tools": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": { "type": "string" },
+                    "description": { "type": "string" },
+                    "upstream": { "type": "string" },
+                    "baseUrl": { "type": "string" },
+                    "route": { "type": "string" },
+                    "price": { "type": "string" },
+                    "rail": { "type": "string", "enum": ["auto", "evm", "solana"] },
+                    "affordable": { "type": "boolean", "description": "whether this agent could pay for the tool right now under its own caps" }
+                  }
+                }
+              }
+            },
+            "required": ["attestationId", "issuedAt", "expiresAt", "rails", "caps", "budget", "tools"]
+          },
+          "signature": { "type": "string" },
+          "algorithm": { "type": "string", "const": "HMAC-SHA256" },
+          "canonicalization": { "type": "string", "const": "sorted-keys-json" }
+        },
+        "required": ["payload", "signature", "algorithm", "canonicalization"]
+      }
+    }
+  ],
+  "freeResources": [
+    { "resource": "GET /tools", "description": "The tool registry as the MCP server sees it, after env overrides: upstream, route, price, rail, and input schema per tool." },
+    { "resource": "GET /ledger", "description": "Spending caps, spend so far, and every payment this process has made." },
+    { "resource": "POST /tools/:name", "description": "Run one registered tool over HTTP, for agents that don't speak MCP. Free to call — it spends this agent's own wallet under its own caps, so expose it only to callers you trust." },
+    { "resource": "POST /verify", "description": "Verify any attestation this server signed." },
+    { "resource": "GET /health", "description": "Liveness." }
+  ],
+  "mcp": {
+    "transport": "stdio",
+    "command": "npx tsx src/mcp.ts",
+    "builtinTools": ["list_commerce_tools", "spending_report", "discover_service"],
+    "note": "Commerce tools are generated from config/tools.json; every one takes an optional `rail` argument (auto | evm | solana) so a model can choose the payment rail per call."
+  }
+}
