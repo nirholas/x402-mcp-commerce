@@ -1,5 +1,5 @@
 {
-  "name": "x402-mcp-commerce",
+  "name": "@nirholas/x402-mcp-commerce",
   "version": "0.1.0",
   "description": "MCP server that gives Claude/GPT agents commerce tools — each tool call pays an upstream x402 endpoint and returns its artifact",
   "author": "nirholas <nichxbt@gmail.com>",

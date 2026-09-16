@@ -22,6 +22,14 @@ about because it is printed in the result.
 
 ## Quickstart
 
+Run the published MCP server without cloning:
+
+```bash
+npx @nirholas/x402-mcp-commerce   # MCP server over stdio
+```
+
+Or work from source:
+
 ```bash
 git clone https://github.com/nirholas/x402-mcp-commerce
 cd x402-mcp-commerce && npm install
