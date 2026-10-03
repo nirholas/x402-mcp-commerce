@@ -6,6 +6,110 @@
   },
   "tools": [
     {
+      "name": "url_to_markdown",
+      "description": "Convert a public webpage URL to clean Markdown for RAG, grounding, research, summarization and LLM context.",
+      "upstream": "industrial-platform",
+      "baseUrl": "https://x402-gateway-production-1f21.up.railway.app",
+      "method": "POST",
+      "path": "/web/markdown",
+      "price": "$0.001",
+      "input": {
+        "url": {
+          "type": "string",
+          "required": true,
+          "description": "Public http(s) webpage URL."
+        },
+        "max_chars": {
+          "type": "number",
+          "description": "Maximum Markdown characters to return, up to 150000."
+        },
+        "timeout_seconds": {
+          "type": "number",
+          "description": "Fetch timeout in seconds, 5-60."
+        }
+      },
+      "rail": "evm"
+    },
+    {
+      "name": "monitor_webpage",
+      "description": "Detect meaningful webpage changes for prices, inventory, availability, documentation, policies and competitor monitoring. For recurring checks, pass the prior response current_hash back as previous_hash.",
+      "upstream": "industrial-platform",
+      "baseUrl": "https://x402-gateway-production-1f21.up.railway.app",
+      "method": "POST",
+      "path": "/change",
+      "price": "$0.001",
+      "input": {
+        "url": {
+          "type": "string",
+          "required": true,
+          "description": "Public webpage URL to inspect."
+        },
+        "previous_hash": {
+          "type": "string",
+          "description": "Prior deterministic hash from the preceding successful check."
+        },
+        "previous_text": {
+          "type": "string",
+          "description": "Optional prior text for diff generation."
+        },
+        "include_current_text": {
+          "type": "boolean",
+          "description": "Include current normalized text in the response."
+        },
+        "timeout_seconds": {
+          "type": "number",
+          "description": "Fetch timeout in seconds, 5-60."
+        }
+      },
+      "rail": "evm"
+    },
+    {
+      "name": "extract_web_metadata",
+      "description": "Extract title, description, canonical URL, robots directives, headings, OpenGraph, Twitter cards and JSON-LD for one public URL.",
+      "upstream": "industrial-platform",
+      "baseUrl": "https://x402-gateway-production-1f21.up.railway.app",
+      "method": "POST",
+      "path": "/metadata-single",
+      "price": "$0.001",
+      "input": {
+        "url": {
+          "type": "string",
+          "required": true,
+          "description": "Public http(s) webpage URL."
+        },
+        "timeout_seconds": {
+          "type": "number",
+          "description": "Fetch timeout in seconds, 5-60."
+        }
+      },
+      "rail": "evm"
+    },
+    {
+      "name": "wallet_balance",
+      "description": "Return native ETH and USDC balances for one wallet on Base or Ethereum.",
+      "upstream": "industrial-platform",
+      "baseUrl": "https://x402-gateway-production-1f21.up.railway.app",
+      "method": "GET",
+      "path": "/wallet-balance/cdp",
+      "price": "$0.001",
+      "query": [
+        "address",
+        "chain"
+      ],
+      "input": {
+        "address": {
+          "type": "string",
+          "required": true,
+          "description": "20-byte EVM wallet address."
+        },
+        "chain": {
+          "type": "string",
+          "description": "CAIP-2 chain id; eip155:8453 for Base or eip155:1 for Ethereum."
+        }
+      },
+      "rail": "evm"
+    },
+    {
       "name": "search_flights",
       "description": "Search flights between two airports on a date. Returns priced offers with airline, times, stops and fare basis.",
       "upstream": "x402-flight-search",
@@ -344,6 +448,262 @@
           "description": "restaurant | hotel | order | flight | appointment | generic"
         }
       }
+    },
+    {
+      "name": "transaction_status",
+      "description": "Check whether an EVM transaction is pending, confirmed or reverted, including confirmations and gas metadata.",
+      "upstream": "industrial-platform",
+      "baseUrl": "https://x402-gateway-production-1f21.up.railway.app",
+      "method": "GET",
+      "path": "/transaction-status",
+      "price": "$0.001",
+      "query": [
+        "tx_hash",
+        "network"
+      ],
+      "input": {
+        "tx_hash": {
+          "type": "string",
+          "required": true,
+          "description": "32-byte EVM transaction hash."
+        },
+        "network": {
+          "type": "string",
+          "description": "base or ethereum; defaults to base."
+        }
+      },
+      "rail": "evm"
+    },
+    {
+      "name": "gas_state",
+      "description": "Return current gas price, latest block base fee and gas utilization on Base or Ethereum.",
+      "upstream": "industrial-platform",
+      "baseUrl": "https://x402-gateway-production-1f21.up.railway.app",
+      "method": "GET",
+      "path": "/gas-state",
+      "price": "$0.001",
+      "query": [
+        "network"
+      ],
+      "input": {
+        "network": {
+          "type": "string",
+          "description": "base or ethereum; defaults to base."
+        }
+      },
+      "rail": "evm"
+    },
+    {
+      "name": "erc20_allowance",
+      "description": "Check an ERC-20 allowance from owner to spender before swaps, payments or autonomous contract execution.",
+      "upstream": "industrial-platform",
+      "baseUrl": "https://x402-gateway-production-1f21.up.railway.app",
+      "method": "GET",
+      "path": "/erc20-allowance",
+      "price": "$0.001",
+      "query": [
+        "owner",
+        "spender",
+        "contract",
+        "network"
+      ],
+      "input": {
+        "owner": {
+          "type": "string",
+          "required": true,
+          "description": "Owner EVM wallet address."
+        },
+        "spender": {
+          "type": "string",
+          "required": true,
+          "description": "Spender/contract EVM address."
+        },
+        "contract": {
+          "type": "string",
+          "required": true,
+          "description": "ERC-20 token contract address."
+        },
+        "network": {
+          "type": "string",
+          "description": "base or ethereum; defaults to base."
+        }
+      },
+      "rail": "evm"
+    },
+    {
+      "name": "wallet_activity",
+      "description": "Return recent USDC or ERC-20 transfers for a wallet plus next_cursor for recurring payment and treasury monitoring.",
+      "upstream": "industrial-platform",
+      "baseUrl": "https://x402-gateway-production-1f21.up.railway.app",
+      "method": "GET",
+      "path": "/wallet-activity",
+      "price": "$0.001",
+      "query": [
+        "address",
+        "contract",
+        "network",
+        "cursor",
+        "lookback_blocks"
+      ],
+      "input": {
+        "address": {
+          "type": "string",
+          "required": true,
+          "description": "EVM wallet address."
+        },
+        "contract": {
+          "type": "string",
+          "description": "ERC-20 contract; defaults to USDC."
+        },
+        "network": {
+          "type": "string",
+          "description": "base or ethereum; defaults to base."
+        },
+        "cursor": {
+          "type": "number",
+          "description": "Previous next_cursor block number."
+        },
+        "lookback_blocks": {
+          "type": "number",
+          "description": "Initial scan lookback, up to 5000 blocks."
+        }
+      },
+      "rail": "evm"
+    },
+    {
+      "name": "monitor_wallet",
+      "description": "Recurring wallet monitor for balance changes and new USDC/ERC-20 transfers. Pass next_cursor and current_state_hash from the prior result into the next call.",
+      "upstream": "industrial-platform",
+      "baseUrl": "https://x402-gateway-production-1f21.up.railway.app",
+      "method": "POST",
+      "path": "/agent/wallet-monitor",
+      "price": "$0.005",
+      "input": {
+        "address": {
+          "type": "string",
+          "required": true,
+          "description": "EVM wallet address."
+        },
+        "network": {
+          "type": "string",
+          "description": "base or ethereum; defaults to base."
+        },
+        "activity_contract": {
+          "type": "string",
+          "description": "ERC-20 activity contract; defaults to USDC."
+        },
+        "cursor": {
+          "type": "number",
+          "description": "Previous next_cursor block number."
+        },
+        "lookback_blocks": {
+          "type": "number",
+          "description": "Initial scan lookback, up to 5000 blocks."
+        },
+        "previous_state_hash": {
+          "type": "string",
+          "description": "Prior current_state_hash for change detection."
+        }
+      },
+      "rail": "evm"
+    },
+    {
+      "name": "treasury_snapshot",
+      "description": "One-call treasury snapshot: wallet balances, gas/base fee and recent USDC/ERC-20 activity with cursor/state for recurring polling.",
+      "upstream": "industrial-platform",
+      "baseUrl": "https://x402-gateway-production-1f21.up.railway.app",
+      "method": "POST",
+      "path": "/agent/treasury-snapshot",
+      "price": "$0.01",
+      "input": {
+        "address": {
+          "type": "string",
+          "required": true,
+          "description": "EVM wallet address."
+        },
+        "network": {
+          "type": "string",
+          "description": "base or ethereum; defaults to base."
+        },
+        "activity_contract": {
+          "type": "string",
+          "description": "ERC-20 activity contract; defaults to USDC."
+        },
+        "activity_cursor": {
+          "type": "number",
+          "description": "Previous activity cursor block number."
+        },
+        "lookback_blocks": {
+          "type": "number",
+          "description": "Initial scan lookback, up to 5000 blocks."
+        },
+        "previous_state_hash": {
+          "type": "string",
+          "description": "Prior current_state_hash for change detection."
+        }
+      },
+      "rail": "evm"
+    },
+    {
+      "name": "pretrade_context",
+      "description": "Data-only pre-trade bundle: wallet state, ERC-20 allowance, gas/base fee, realtime price, 24h stats and best bid/ask spread. Never submits a trade.",
+      "upstream": "industrial-platform",
+      "baseUrl": "https://x402-gateway-production-1f21.up.railway.app",
+      "method": "POST",
+      "path": "/agent/pretrade",
+      "price": "$0.01",
+      "input": {
+        "address": {
+          "type": "string",
+          "required": true,
+          "description": "EVM wallet address."
+        },
+        "spender": {
+          "type": "string",
+          "required": true,
+          "description": "Spender/contract EVM address."
+        },
+        "token_contract": {
+          "type": "string",
+          "required": true,
+          "description": "ERC-20 token contract address."
+        },
+        "network": {
+          "type": "string",
+          "description": "base or ethereum; defaults to base."
+        },
+        "product_id": {
+          "type": "string",
+          "required": true,
+          "description": "Coinbase Exchange market, e.g. BTC-USD."
+        }
+      },
+      "rail": "evm"
+    },
+    {
+      "name": "watch_transaction",
+      "description": "Poll an EVM transaction until confirmed or reverted. Pass the prior current_state_hash back on later checks.",
+      "upstream": "industrial-platform",
+      "baseUrl": "https://x402-gateway-production-1f21.up.railway.app",
+      "method": "POST",
+      "path": "/agent/transaction-watch",
+      "price": "$0.003",
+      "input": {
+        "tx_hash": {
+          "type": "string",
+          "required": true,
+          "description": "32-byte EVM transaction hash."
+        },
+        "network": {
+          "type": "string",
+          "description": "base or ethereum; defaults to base."
+        },
+        "previous_state_hash": {
+          "type": "string",
+          "description": "Prior current_state_hash for change detection."
+        }
+      },
+      "rail": "evm"
     }
   ]
 }
