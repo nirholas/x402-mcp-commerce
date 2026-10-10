@@ -1,0 +1,28 @@
+# x402-mcp-commerce
+
+> MCP server that gives Claude/GPT agents commerce tools: each tool call pays an upstream x402 endpoint and returns its artifact
+
+x402-mcp-commerce is an open-source repository by nirholas, part of the three.ws ecosystem.
+
+## Docs
+
+- [README](https://github.com/nirholas/x402-mcp-commerce/blob/HEAD/README.md): install, usage and reference
+- [Why x402 for this](https://github.com/nirholas/x402-mcp-commerce/blob/HEAD/README.md#why-x402-for-this)
+- [Quickstart](https://github.com/nirholas/x402-mcp-commerce/blob/HEAD/README.md#quickstart)
+- [Tools](https://github.com/nirholas/x402-mcp-commerce/blob/HEAD/README.md#tools)
+- [Choosing a payment rail](https://github.com/nirholas/x402-mcp-commerce/blob/HEAD/README.md#choosing-a-payment-rail)
+- [Spending caps](https://github.com/nirholas/x402-mcp-commerce/blob/HEAD/README.md#spending-caps)
+- [How x402 works](https://github.com/nirholas/x402-mcp-commerce/blob/HEAD/README.md#how-x402-works)
+- [Real backend / API keys](https://github.com/nirholas/x402-mcp-commerce/blob/HEAD/README.md#real-backend-api-keys)
+- [For AI agents](https://github.com/nirholas/x402-mcp-commerce/blob/HEAD/README.md#for-ai-agents)
+- [AGENTS.md](https://github.com/nirholas/x402-mcp-commerce/blob/HEAD/AGENTS.md): guidance for coding agents
+- [Full text for LLMs](https://github.com/nirholas/x402-mcp-commerce/blob/HEAD/llms-full.txt): the README inlined
+
+## Project
+
+- [Source](https://github.com/nirholas/x402-mcp-commerce)
+- [Issues](https://github.com/nirholas/x402-mcp-commerce/issues)
+- [Discussions](https://github.com/nirholas/x402-mcp-commerce/discussions)
+- [Homepage](https://nirholas.github.io/x402-mcp-commerce/)
+- [three.ws](https://three.ws): the platform this is part of
+- [All repositories by nirholas](https://github.com/nirholas/nirholas#readme)
