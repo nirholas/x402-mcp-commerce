@@ -30,7 +30,7 @@ const failure = (value: unknown) => ({ ...json(value), isError: true as const })
 
 /** Registry input descriptors → a Zod shape the MCP SDK can advertise. */
 function zodShape(tool: ToolDef): ZodRawShape {
-  const shape: ZodRawShape = {};
+  const shape: Record<string, ZodTypeAny> = {};
   for (const [name, spec] of Object.entries(tool.input)) {
     shape[name] = describe(base(spec), spec);
   }
@@ -53,7 +53,7 @@ function base(spec: ToolInput): ZodTypeAny {
     case "boolean":
       return spec.required ? z.boolean() : z.boolean().optional();
     case "object":
-      return spec.required ? z.record(z.unknown()) : z.record(z.unknown()).optional();
+      return spec.required ? z.record(z.string(), z.unknown()) : z.record(z.string(), z.unknown()).optional();
     default:
       return spec.required ? z.string() : z.string().optional();
   }
