@@ -2,11 +2,10 @@
   "mcpServers": {
     "x402-commerce": {
       "command": "npx",
-      "args": ["-y", "@nirholas/x402-mcp-commerce"],
-      "env": {
-        "PRIVATE_KEY": "${PRIVATE_KEY}",
-        "SOLANA_PRIVATE_KEY": "${SOLANA_PRIVATE_KEY}"
-      }
+      "args": [
+        "-y",
+        "@nirholas/x402-mcp-commerce"
+      ]
     }
   }
 }
