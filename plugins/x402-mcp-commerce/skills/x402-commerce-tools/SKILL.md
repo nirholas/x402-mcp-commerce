@@ -11,10 +11,10 @@ An MCP server (stdio) that turns x402 merchant routes into tools. Calling a tool
 
 The plugin's `.mcp.json` runs `npx -y @nirholas/x402-mcp-commerce` (bin `x402-mcp-commerce`, entry `dist/mcp.js`). From a clone instead: `npm install && npm run mcp`.
 
-Set these in the environment of the client:
+Export these in the shell you start Claude Code from. The server inherits that environment, and the plugin's `.mcp.json` deliberately lists no keys, so no key is ever written to a config file:
 
+- `SOLANA_PRIVATE_KEY`: base58 or JSON-array secret key, enables the USDC-on-Solana rail. Without it, Solana payments fail with `SOLANA_PAYMENT_FAILED`.
 - `PRIVATE_KEY`: EVM key, enables the USDC-on-Base rail. Without it, calls on that rail fail with `NO_WALLET`.
-- `SOLANA_PRIVATE_KEY`: enables the USDC-on-Solana rail. Without it, Solana payments fail with `SOLANA_PAYMENT_FAILED`.
 - Optional: `SOLANA_RPC_URL`, `SOLANA_DEVNET_RPC_URL`, `X402_TIMEOUT_MS` (default 20000).
 
 Use throwaway, low-balance wallets. Every payment is real USDC on the configured network.
