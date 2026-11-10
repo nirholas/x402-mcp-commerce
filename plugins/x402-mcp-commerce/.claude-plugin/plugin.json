@@ -1,0 +1,20 @@
+{
+  "name": "x402-mcp-commerce",
+  "version": "0.1.0",
+  "description": "MCP server that gives an agent paid commerce tools over x402, with spend caps and a USDC rail on Base or Solana.",
+  "author": {
+    "name": "nirholas"
+  },
+  "repository": "https://github.com/nirholas/x402-mcp-commerce",
+  "homepage": "https://nirholas.github.io/x402-mcp-commerce/",
+  "license": "Apache-2.0",
+  "keywords": [
+    "x402",
+    "mcp",
+    "usdc",
+    "solana",
+    "base",
+    "agentic-commerce",
+    "spend-caps"
+  ]
+}
