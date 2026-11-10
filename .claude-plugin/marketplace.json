@@ -1,0 +1,24 @@
+{
+  "name": "x402-mcp-commerce",
+  "owner": {
+    "name": "nirholas"
+  },
+  "description": "MCP server that gives an agent paid commerce tools over x402, with spend caps and a USDC rail on Base or Solana.",
+  "plugins": [
+    {
+      "name": "x402-mcp-commerce",
+      "source": "./plugins/x402-mcp-commerce",
+      "description": "MCP server that gives an agent paid commerce tools over x402, with spend caps and a USDC rail on Base or Solana.",
+      "category": "automation",
+      "tags": [
+        "x402",
+        "mcp",
+        "usdc",
+        "solana",
+        "base",
+        "agentic-commerce",
+        "spend-caps"
+      ]
+    }
+  ]
+}
